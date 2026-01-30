@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Live Sub Counter</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #1c1c1c;
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      width: 350px;
+      box-shadow: 0 0 20px rgba(255,0,0,0.3);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    h2 {
+      margin-top: 20px;
+      color: #ff0000;
+    }
+
+    .count {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <input id="search" placeholder="Search YouTuber name">
+  <button onclick="searchChannel()">Search</button>
+
+  <h2 id="channelName"></h2>
+  <div class="count" id="subs">—</div>
+</div>
+
+<script>
+  const API_KEY = "AIzaSyCkQrB7_32ju9eskkSeMYmFpW7PMJWfb-M";
+  let channelId = null;
+  let interval = null;
+
+  async function searchChannel() {
+    const query = document.getElementById("search").value;
+    if (!query) return;
+
+    clearInterval(interval);
+
+    const searchUrl =
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(query)}&key=${API_KEY}`;
+
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
+
+    if (!searchData.items.length) {
+      document.getElementById("subs").textContent = "Not found";
+      return;
+    }
+
+    channelId = searchData.items[0].snippet.channelId;
+    document.getElementById("channelName").textContent =
+      searchData.items[0].snippet.channelTitle;
+
+    updateSubs();
+    interval = setInterval(updateSubs, 5000);
+  }
+
+  async function updateSubs() {
+    const statsUrl =
+      `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${API_KEY}`;
+
+    const res = await fetch(statsUrl);
+    const data = await res.json();
+
+    const subs = data.items[0].statistics.subscriberCount;
+    document.getElementById("subs").textContent =
+      Number(subs).toLocaleString();
+  }
+</script>
+
+</body>
+</html>
